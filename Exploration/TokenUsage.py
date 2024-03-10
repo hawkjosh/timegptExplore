@@ -9,7 +9,7 @@ from SpecialPrint import printSp, Style, Color, BgColor
 load_dotenv()
 
 
-def getData(waitForUpdate=False, timeout=30):
+def getData(waitForUpdate=False, timeout=20):
     startTime = time.time()
     prevCalls, prevTokens, prevSpent = readData()
 
@@ -40,7 +40,7 @@ def getData(waitForUpdate=False, timeout=30):
                 "\nToken usage update timed out. There was either no update or the API is down."
             )
 
-        time.sleep(5)
+        time.sleep(4)
 
 
 def readData():
