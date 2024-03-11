@@ -1,10 +1,11 @@
 import os
 import json
 import time
+import shelve
 import requests
 from dotenv import load_dotenv
 
-from UsageDisplay import showTokenUsage
+from UsageDisplay import showTokenUsage, readData
 
 load_dotenv()
 
@@ -16,9 +17,9 @@ def fetchData(url):
     return None
 
 
-def updateLocalData(filepath, newData):
+def updateLocalData(jsonFilePath, newData=None):
     try:
-        with open(filepath, "r") as file:
+        with open(jsonFilePath, "r") as file:
             try:
                 localData = json.load(file)
             except json.JSONDecodeError:
@@ -31,10 +32,47 @@ def updateLocalData(filepath, newData):
     for item in newData:
         localDataCreatedAt[item["created_at"]] = item
 
-    with open(filepath, "w") as file:
+    with open(jsonFilePath, "w") as file:
         json.dump(list(localDataCreatedAt.values()), file, indent=4)
+
+    with shelve.open("usage") as shelf:
+        usage = []
+        for key in ["calls", "tokens", "spent"]:
+            if key not in shelf:
+                shelf[key] = {"curr": 0, "diff": 0}
+                usage.append(shelf[key])
+            else:
+                currVal = shelf[key]["curr"]
+                diffVal = newData[key] - currVal
+
+                shelf[key]["curr"] = newData[key]
+                shelf[key]["diff"] = diffVal
+
+                if key == "spent":
+                    usage.append(
+                        {
+                            key: {
+                                "curr": round(shelf[key]["curr"], 2),
+                                "diff": round(shelf[key]["diff"], 2),
+                            }
+                        }
+                    )
+                else:
+                    usage.append(
+                        {key: {"curr": shelf[key]["curr"], "diff": shelf[key]["diff"]}}
+                    )
+        if len(usage) == 0:
+            shelfUsage = [
+                {"calls": {"curr": 0, "diff": 0}},
+                {"tokens": {"curr": 0, "diff": 0}},
+                {"spent": {"curr": 0, "diff": 0}},
+            ]
+        else:
+            shelfUsage = usage
+
     printAndClear("Token usage successfully updated with new data.", newLine=True)
     showTokenUsage()
+    return shelfUsage
 
 
 def printAndClear(message, sleepTime=1, newLine=False):

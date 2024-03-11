@@ -405,5 +405,115 @@
         "output_tokens": 735,
         "finetune_tokens": 0,
         "price_of_request_in_cents": 257
+    },
+    {
+        "created_at": "2024-03-11T17:52:36.961228+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 179,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 257
+    },
+    {
+        "created_at": "2024-03-11T18:04:30.286852+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series",
+        "input_tokens": 179,
+        "output_tokens": 7,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 24
+    },
+    {
+        "created_at": "2024-03-11T18:04:34.081139+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_historic",
+        "input_tokens": 179,
+        "output_tokens": 1176,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 398
+    },
+    {
+        "created_at": "2024-03-11T18:11:19.191407+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 179,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 257
+    },
+    {
+        "created_at": "2024-03-11T18:13:43.566415+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 179,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 257
+    },
+    {
+        "created_at": "2024-03-11T18:22:27.2173+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series",
+        "input_tokens": 8639,
+        "output_tokens": 7,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 1039
+    },
+    {
+        "created_at": "2024-03-11T18:22:31.772876+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_historic",
+        "input_tokens": 8639,
+        "output_tokens": 1176,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 1413
+    },
+    {
+        "created_at": "2024-03-11T18:28:05.671824+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 8592,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 1266
+    },
+    {
+        "created_at": "2024-03-11T18:31:07.968516+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 8592,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 1266
+    },
+    {
+        "created_at": "2024-03-11T18:50:58.066197+00:00",
+        "team_id": 1244352,
+        "method": "POST",
+        "response_status": 200,
+        "path": "/timegpt_multi_series_anomalies",
+        "input_tokens": 8592,
+        "output_tokens": 735,
+        "finetune_tokens": 0,
+        "price_of_request_in_cents": 1266
     }
 ]
