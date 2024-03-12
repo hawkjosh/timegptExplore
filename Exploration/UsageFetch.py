@@ -5,12 +5,13 @@ import shelve
 import requests
 from dotenv import load_dotenv
 
-from UsageDisplay import showTokenUsage, readData
+from UsageDisplay import showTokenUsage
 
 load_dotenv()
 
+url = os.getenv("USAGE_URL")
 
-def fetchData(url):
+def fetchData():
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -90,7 +91,7 @@ def refreshUsageData():
         tryCount = 1
         checkCount = 4
         while time.time() - startTime < 20:
-            newData = fetchData(os.getenv("USAGE_URL"))
+            newData = fetchData()
             if newData is not None:
                 try:
                     with open("./usage.json", "r") as file:
