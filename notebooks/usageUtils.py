@@ -30,7 +30,7 @@ colorCodes = {
     Color.BRIGHT_WHITE: "\033[97m",
 }
 
-def printSp(text, style=None, color=None):
+def printColor(text, style=None, color=None):
     codes = []
 
     if style and style in styleCodes:
@@ -43,25 +43,12 @@ def printSp(text, style=None, color=None):
 
     return f"{combinedCodes}{text}{resetCode}"
 
-def printAndClear(message, sleepTime=1, newLine=False):
+def printSpecial(message, sleepTime=1, newLine=False, end=""):
     if not newLine:
-        print(f"\r{message}", end="", flush=True)
+        print(f"\r{message}", end=end, flush=True)
         time.sleep(sleepTime)
     else:
-        print(f"\r{message}\n\n", end="")
-
-def borderPrint(text1, text2=None):
-    padding = 10
-    width = max(len(text1), len(text2) if text2 is not None else 0) + padding * 2
-
-    topBorder = printSp(f"{"= " * int(width // 4)}\n", color=Color.BRIGHT_WHITE)
-    botBorder = printSp(f"\n{"= " * int(width // 4)}", color=Color.BRIGHT_WHITE)
-
-    print(topBorder)
-    print(f"{text1.center(width)}")
-    if text2 is not None:
-        print(f"{text2.center(width)}")
-    print(botBorder)
+        print(f"\r{message}\n", end=end)
 
 def fetchData():
     response = requests.get(os.getenv("USAGE_URL"))
@@ -143,23 +130,26 @@ def readTotals():
 
 def showTotalUsage():
     tots = readTotals()
-
+    
     calls = tots["totCalls"]
     tokens = tots["totTokens"]
     spent = tots["totSpent"]
 
-    callsTxt = printSp("API CALLS:  ", color=Color.BRIGHT_WHITE)
-    callsVal = printSp(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_RED)
-    tokensTxt = printSp("TOKENS:  ", color=Color.BRIGHT_WHITE)
-    tokensVal = printSp(f"{tokens}", style=Style.BOLD, color=Color.BRIGHT_RED)
-    spentTxt = printSp("SPENT:  ", color=Color.BRIGHT_WHITE)
-    spentVal = printSp(f"{spent:.2f}", style=Style.BOLD, color=Color.BRIGHT_RED)
-
-    divider = printSp("   ||   ", style=Style.BOLD, color=Color.BRIGHT_WHITE)
-
+    callsTxt = printColor("API CALLS:  ", color=Color.BRIGHT_WHITE)
+    callsVal = printColor(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_RED)
+    tokensTxt = printColor("TOKENS:  ", color=Color.BRIGHT_WHITE)
+    tokensVal = printColor(f"{tokens}", style=Style.BOLD, color=Color.BRIGHT_RED)
+    spentTxt = printColor("SPENT:  ", color=Color.BRIGHT_WHITE)
+    spentVal = printColor(f"{spent:.2f}", style=Style.BOLD, color=Color.BRIGHT_RED)
+    
+    divider = printColor("   ||   ", style=Style.BOLD, color=Color.BRIGHT_WHITE)
     printStr = f"{callsTxt}{callsVal}{divider}{tokensTxt}{tokensVal}{divider}{spentTxt}{spentVal}"
-
-    return printStr
+    width = len(printStr) + 20
+    border = printColor(f"{"= " * int(width // 4)}", color=Color.BRIGHT_WHITE)
+    
+    print(border)
+    print(f"\n{printStr.center(width)}\n")
+    print(border)
 
 def showRunUsage():
     tots = readTotals()
@@ -168,32 +158,29 @@ def showRunUsage():
     tokens = tots["runTokens"]
     spent = tots["runSpent"]
 
-    callsVal = printSp(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
-    callsTxt = printSp(f" {"call" if calls == 1 else "calls"}", color=Color.BRIGHT_YELLOW)
-    tokensVal = printSp(f"{tokens}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
-    tokensTxt = printSp(" tokens", color=Color.BRIGHT_YELLOW)
-    spentVal = printSp(f"{spent:.2f}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
-    spentTxt = printSp(" spent", color=Color.BRIGHT_YELLOW)
+    callsVal = printColor(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
+    callsTxt = printColor(f" {"call" if calls == 1 else "calls"}", color=Color.BRIGHT_YELLOW)
+    tokensVal = printColor(f"{tokens}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
+    tokensTxt = printColor(" tokens", color=Color.BRIGHT_YELLOW)
+    spentVal = printColor(f"{spent:.2f}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
+    spentTxt = printColor(" spent", color=Color.BRIGHT_YELLOW)
 
-    front = printSp("<<  ", color=Color.BRIGHT_YELLOW)
-    back = printSp("  >>", color=Color.BRIGHT_YELLOW)
-    divider = printSp("  ••  ", style=Style.BOLD, color=Color.BRIGHT_YELLOW)
+    front = printColor("<<  ", color=Color.BRIGHT_YELLOW)
+    back = printColor("  >>", color=Color.BRIGHT_YELLOW)
+    divider = printColor("  ••  ", style=Style.BOLD, color=Color.BRIGHT_YELLOW)
 
     printStr = f"{front}{callsVal}{callsTxt}{divider}{tokensVal}{tokensTxt}{divider}{spentVal}{spentTxt}{back}"
 
     return printStr
 
-def showUsage(withRun=False):
-
-    totsText = showTotalUsage()
-    runText = showRunUsage()
-
-    if withRun:
-        borderPrint(text1=totsText, text2=runText)
-    else:
-        borderPrint(text1=totsText)
-
-def refreshUsageData():
+def getUsageData(update=False):
+    updateJsonData()
+    
+    if not update:
+        printSpecial("Current usage data:", newLine=True, end="\n")
+        showTotalUsage()
+        return
+    
     startTime = time.time()
     tryCount = 1
     checkCount = 4
@@ -201,37 +188,38 @@ def refreshUsageData():
 
     while time.time() - startTime < 20:
         newData = updateJsonData()
-        totals = updateShelfData()
         if newData is not None:
             if len(newData) > len(localData):
-                runCalls = totals["calls"]["diff"]
-                printAndClear(f"Usage data successfully updated with {runCalls} {"call" if runCalls == 1 else "calls"}", newLine=True)
-                showUsage(withRun=True)
+                printSpecial("Usage data successfully updated with:", newLine=True)
+                printSpecial(showRunUsage(), newLine=True, end="\n")
+                showTotalUsage()
                 return
-            printAndClear(
+            printSpecial(
                 f"Checking for new data || Attempt {tryCount} of {checkCount} .        "
             )
-            printAndClear(
+            printSpecial(
                 f"Checking for new data || Attempt {tryCount} of {checkCount} . .      "
             )
-            printAndClear(
+            printSpecial(
                 f"Checking for new data || Attempt {tryCount} of {checkCount} . . .    "
             )
-            printAndClear(
+            printSpecial(
                 f"Checking for new data || Attempt {tryCount} of {checkCount} . . . .  "
             )
-            printAndClear(
+            printSpecial(
                 f"Checking for new data || Attempt {tryCount} of {checkCount} . . . . ."
             )
             tryCount += 1
         else:
-            printAndClear(
+            printSpecial(
                 "Failed to connect with usage API. Retrying...", 5,
             )
             checkCount -= 1
 
-    printAndClear("No new data detected.                              ", newLine=True)
-    showUsage()
+    printSpecial("No new data detected.                              ", newLine=True, end="\n")
+    showTotalUsage()
+
 
 if __name__ == "__main__":
-    refreshUsageData()
+    getUsageData()
+    getUsageData(update=True)
