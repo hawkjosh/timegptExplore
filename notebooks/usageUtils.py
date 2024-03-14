@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Style(Enum):
     BOLD = auto()
     RESET = auto()
@@ -30,6 +31,7 @@ colorCodes = {
     Color.BRIGHT_WHITE: "\033[97m",
 }
 
+
 def printColor(text, style=None, color=None):
     codes = []
 
@@ -43,6 +45,7 @@ def printColor(text, style=None, color=None):
 
     return f"{combinedCodes}{text}{resetCode}"
 
+
 def printSpecial(message, sleepTime=1, newLine=False, end=""):
     if not newLine:
         print(f"\r{message}", end=end, flush=True)
@@ -50,90 +53,115 @@ def printSpecial(message, sleepTime=1, newLine=False, end=""):
     else:
         print(f"\r{message}\n", end=end)
 
-def fetchData():
-    response = requests.get(os.getenv("USAGE_URL"))
-    if response.status_code == 200:
-        return response.json()
-    return None
 
-def readJsonData():
-    with open("usage.json", "r") as file:
-        data = json.load(file)
-        return data
+def getLocalData(update=False):
+    if os.path.exists("localData.json"):
+        with open("localData.json", "r") as file:
+            localData = json.load(file)
+            lCalls = len(localData)
+            lTokens = sum(
+                (item["input_tokens"] if item["input_tokens"] is not None else 0)
+                + (item["output_tokens"] if item["output_tokens"] is not None else 0)
+                for item in localData
+            )
+            lSpent = sum(item["price_of_request_in_cents"] for item in localData) / 100
+            localUsage = {"calls": lCalls, "tokens": lTokens, "spent": round(lSpent, 2)}
+    else:
+        localData = []
+        localUsage = {"calls": 0, "tokens": 0, "spent": 0.0}
 
-def updateJsonData():
-    apiData = fetchData()
-    oldData = readJsonData()
+    if update:
+        startTime = time.time()
+        tryCount = 1
+        checkCount = 4
+        while time.time() - startTime < 20:
+            response = requests.get(os.getenv("USAGE_URL"))
+            apiData = response.json()
+            if len(apiData) > len(localData):
+                localDataIds = set(item["created_at"] for item in localData)
+                newData = [
+                    item for item in apiData if item["created_at"] not in localDataIds
+                ]
 
-    oldDataIds = set(item["created_at"] for item in oldData)
-    newData = [item for item in apiData if item["created_at"] not in oldDataIds]
+                updatedData = localData + newData
+                uCalls = len(updatedData)
+                uTokens = sum(
+                    (item["input_tokens"] if item["input_tokens"] is not None else 0)
+                    + (
+                        item["output_tokens"]
+                        if item["output_tokens"] is not None
+                        else 0
+                    )
+                    for item in updatedData
+                )
+                uSpent = (
+                    sum(item["price_of_request_in_cents"] for item in updatedData) / 100
+                )
+                updatedUsage = {
+                    "calls": uCalls,
+                    "tokens": uTokens,
+                    "spent": round(uSpent, 2),
+                }
+                with open("localData.json", "w") as file:
+                    json.dump(updatedData, file)
+                printSpecial("Usage data successfully updated with:               ", newLine=True)
+                return updatedUsage, updatedData
+            printSpecial(
+                f"Checking for new data || Attempt {tryCount} of {checkCount} .        "
+            )
+            printSpecial(
+                f"Checking for new data || Attempt {tryCount} of {checkCount} . .      "
+            )
+            printSpecial(
+                f"Checking for new data || Attempt {tryCount} of {checkCount} . . .    "
+            )
+            printSpecial(
+                f"Checking for new data || Attempt {tryCount} of {checkCount} . . . .  "
+            )
+            printSpecial(
+                f"Checking for new data || Attempt {tryCount} of {checkCount} . . . . ."
+            )
+            tryCount += 1
 
-    if newData or len(apiData) != len(oldData):
-        updatedData = oldData + newData
-        with open("usage.json", "w") as file:
-            json.dump(updatedData, file)
-        return updatedData
-    return oldData
+        printSpecial(
+            "No new data detected.                               ",
+            newLine=True,
+            end="\n",
+        )
+        return localUsage, localData
+    return localUsage, localData
 
-def getTotals():
-    data = readJsonData()
 
-    calls = len(data)
-    tokens = sum(
-        (item["input_tokens"] if item["input_tokens"] is not None else 0)
-        + (item["output_tokens"] if item["output_tokens"] is not None else 0)
-        for item in data
-    )
-    spent = sum(item["price_of_request_in_cents"] for item in data) / 100
-
-    totalsData = {
-        "calls": calls,
-        "tokens": tokens,
-        "spent": spent
-    }
-
-    return totalsData
-
-def updateShelfData():
-    totalsData = getTotals()
-
+def getShelfData():
+    totals, _ = getLocalData()
+    
     shelfData = {
         "calls": {"curr": 0, "diff": 0},
         "tokens": {"curr": 0, "diff": 0},
-        "spent": {"curr": 0, "diff": 0},
+        "spent": {"curr": 0.0, "diff": 0.0},
     }
-
-    with shelve.open("usage") as shelf:
+    
+    with shelve.open("shelfData") as shelf:
         for key in ["calls", "tokens", "spent"]:
             if key not in shelf:
                 shelf[key] = {"curr": 0, "diff": 0}
             else:
                 currVal = shelf[key]["curr"]
-                diffVal = totalsData[key] - currVal
-                shelf[key] = {"curr": totalsData[key], "diff": diffVal}
-
+                diffVal = totals[key] - currVal
+                shelf[key] = {"curr": totals[key], "diff": diffVal}
+            
             shelfData[key]["curr"] = shelf[key]["curr"]
             shelfData[key]["diff"] = shelf[key]["diff"]
-
+            
     return shelfData
 
-def readTotals():
-    totals = {}
-    with shelve.open("usage") as shelf:
-        for key in ["calls", "tokens", "spent"]:
-            if key not in shelf:
-                shelf[key] = {"curr": 0, "diff": 0}
-            totals[f"tot{key.capitalize()}"] = shelf[key]["curr"]
-            totals[f"run{key.capitalize()}"] = shelf[key]["diff"]
-
-    return totals
 
 def showTotalUsage():
-    tots = readTotals()
+    tots = getShelfData()
     
-    calls = tots["totCalls"]
-    tokens = tots["totTokens"]
-    spent = tots["totSpent"]
+    calls = tots["calls"]["curr"]
+    tokens = tots["tokens"]["curr"]
+    spent = tots["spent"]["curr"]
 
     callsTxt = printColor("API CALLS:  ", color=Color.BRIGHT_WHITE)
     callsVal = printColor(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_RED)
@@ -151,13 +179,17 @@ def showTotalUsage():
     print(f"\n{printStr.center(width)}\n")
     print(border)
 
+
 def showRunUsage():
-    tots = readTotals()
-
-    calls = tots["runCalls"]
-    tokens = tots["runTokens"]
-    spent = tots["runSpent"]
-
+    tots = getShelfData()
+    
+    calls = tots["calls"]["diff"]
+    tokens = tots["tokens"]["diff"]
+    spent = tots["spent"]["diff"]
+    
+    if calls == 0 and tokens == 0 and spent == 0.0:
+        return
+    
     callsVal = printColor(f"{calls}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
     callsTxt = printColor(f" {"call" if calls == 1 else "calls"}", color=Color.BRIGHT_YELLOW)
     tokensVal = printColor(f"{tokens}", style=Style.BOLD, color=Color.BRIGHT_BLUE)
@@ -167,59 +199,20 @@ def showRunUsage():
 
     front = printColor("<<  ", color=Color.BRIGHT_YELLOW)
     back = printColor("  >>", color=Color.BRIGHT_YELLOW)
-    divider = printColor("  ••  ", style=Style.BOLD, color=Color.BRIGHT_YELLOW)
+    divider = printColor("  •  ", style=Style.BOLD, color=Color.BRIGHT_YELLOW)
 
-    printStr = f"{front}{callsVal}{callsTxt}{divider}{tokensVal}{tokensTxt}{divider}{spentVal}{spentTxt}{back}"
+    printStr = f"\n{front}{callsVal}{callsTxt}{divider}{tokensVal}{tokensTxt}{divider}{spentVal}{spentTxt}{back}"
 
-    return printStr
+    printSpecial(printStr, newLine=True, end="\n")
 
-def getUsageData(update=False):
-    updateJsonData()
+
+def getUsage(update=False):
     
     if not update:
         printSpecial("Current usage data:", newLine=True, end="\n")
         showTotalUsage()
         return
     
-    startTime = time.time()
-    tryCount = 1
-    checkCount = 4
-    localData = readJsonData()
-
-    while time.time() - startTime < 20:
-        newData = updateJsonData()
-        if newData is not None:
-            if len(newData) > len(localData):
-                printSpecial("Usage data successfully updated with:", newLine=True)
-                printSpecial(showRunUsage(), newLine=True, end="\n")
-                showTotalUsage()
-                return
-            printSpecial(
-                f"Checking for new data || Attempt {tryCount} of {checkCount} .        "
-            )
-            printSpecial(
-                f"Checking for new data || Attempt {tryCount} of {checkCount} . .      "
-            )
-            printSpecial(
-                f"Checking for new data || Attempt {tryCount} of {checkCount} . . .    "
-            )
-            printSpecial(
-                f"Checking for new data || Attempt {tryCount} of {checkCount} . . . .  "
-            )
-            printSpecial(
-                f"Checking for new data || Attempt {tryCount} of {checkCount} . . . . ."
-            )
-            tryCount += 1
-        else:
-            printSpecial(
-                "Failed to connect with usage API. Retrying...", 5,
-            )
-            checkCount -= 1
-
-    printSpecial("No new data detected.                              ", newLine=True, end="\n")
+    getLocalData(update=True)
+    showRunUsage()
     showTotalUsage()
-
-
-if __name__ == "__main__":
-    getUsageData()
-    getUsageData(update=True)
