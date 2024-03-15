@@ -55,8 +55,8 @@ def printSpecial(message, sleepTime=1, newLine=False, end=""):
 
 
 def getLocalData(update=False):
-    if os.path.exists("localData.json"):
-        with open("localData.json", "r") as file:
+    if os.path.exists("../usage/localData.json"):
+        with open("../usage/localData.json", "r") as file:
             localData = json.load(file)
             lCalls = len(localData)
             lTokens = sum(
@@ -102,7 +102,7 @@ def getLocalData(update=False):
                     "tokens": uTokens,
                     "spent": round(uSpent, 2),
                 }
-                with open("localData.json", "w") as file:
+                with open("../usage/localData.json", "w") as file:
                     json.dump(updatedData, file)
                 printSpecial("Usage data successfully updated with:               ", newLine=True)
                 return updatedUsage, updatedData
@@ -141,7 +141,7 @@ def getShelfData():
         "spent": {"curr": 0.0, "diff": 0.0},
     }
     
-    with shelve.open("shelfData") as shelf:
+    with shelve.open("../usage/shelfData") as shelf:
         for key in ["calls", "tokens", "spent"]:
             if key not in shelf:
                 shelf[key] = {"curr": 0, "diff": 0}
@@ -207,7 +207,6 @@ def showRunUsage():
 
 
 def getUsage(update=False):
-    
     if not update:
         printSpecial("Current usage data:", newLine=True, end="\n")
         showTotalUsage()

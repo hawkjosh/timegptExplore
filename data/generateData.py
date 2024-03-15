@@ -43,8 +43,9 @@ def generate_data_with_ex_vars(
 
     return data
 
-# if __name__ == "__main__":
-#     generate_basic_data("2021-01-01", "2021-12-31", 0, 100, "basic_data.csv")
-#     generate_data_with_ex_vars(
-#         "2021-01-01", "2021-12-31", 0, 100, 3, 0, 100, "data_with_ex_vars.csv"
-#     )
+
+# Example usage 1
+generate_basic_data("2021-01-01", "2021-12-31", 0, 100, "basic_data.csv")
+
+# Example usage 2
+generate_data_with_ex_vars("2021-01-01", "2021-12-31", 0, 100, 3, 0, 100, "data_with_ex_vars.csv")
