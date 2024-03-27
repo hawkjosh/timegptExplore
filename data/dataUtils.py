@@ -1,10 +1,11 @@
+import os
+import shutil
 import pandas as pd
 import numpy as np
 import pyperclip as pc
 
 
 def generateBasicData(startDate, endDate, lowVal, highVal, filename):
-
     dates = pd.date_range(start=startDate, end=endDate)
 
     np.random.seed(1)
@@ -76,10 +77,10 @@ def generateQuery(
 ):
     if daysAgo:
         timePeriod = f"""TimePeriod >= ago({daysAgo}d)
-        and TimePeriod <= now()"""
+        and TimePeriod < now()"""
     else:
         timePeriod = f"""TimePeriod >= datetime({startDate})
-        and TimePeriod <= {"now()" if endDate is None else f"datetime({endDate})"}"""
+        and TimePeriod {"< now()" if endDate is None else f"<= datetime({endDate})"}"""
 
     query = f"""XStoreAccountBillingDaily
     | where Tenant == "{tenantId}"
@@ -104,6 +105,25 @@ def generateQuery(
 # generateQuery(
 #     tenantId="MS-CBN09PrdStf02C", startDate="2023-09-14", endDate="2024-03-10"
 # )
+
+
+def movePlusRename(name):
+    srcPath = "C:\\Users\\t-joshuahawk\\Downloads\\export.csv"
+    destPath = f"../data/raw/{name}.csv"
+
+    if not os.path.exists(srcPath):
+        print(f"{srcPath} does not exist")
+        return
+
+    shutil.move(srcPath, destPath)
+    print(
+        f"succesfully moved and renamed export.csv in Downloads to {name}.csv in project data/raw folder"
+    )
+    return name
+
+
+# # Example Usage:
+# movePlusRename(name="billing1.csv")
 
 
 def dataPrep(df, filename, timeCol, dropCols):
